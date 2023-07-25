@@ -25,8 +25,7 @@ gene_exp <- read.csv("QBS103_finalProject_geneExpression.csv", row.names = 1)
 BPI <- gene_exp["BPI",]
 BPI <- as.data.frame(t(BPI)) #transposes the matrix
 metadata_BPI <- cbind(metadata, BPI) #creates one data frame with all BPI data
-metadata_BPI$age <- as.integer(metadata_BPI$age)
-head(metadata_BPI)
+suppressWarnings(metadata_BPI$age <- as.integer(metadata_BPI$age))
 ```
 
 ```{r}
@@ -45,27 +44,27 @@ ggplot(metadata_BPI, aes(x = BPI)) + geom_histogram(color = "#6794a7", fill = "w
 #chosen continuous covariate: age
 
 #creates scatterplot with BPI and age
-scatter_outliers <- ggplot(metadata_BPI, aes(x = BPI, y = age)) + 
+suppressWarnings(scatter_outliers <- ggplot(metadata_BPI, aes(x = BPI, y = age)) + 
   geom_point(color = "#6794a7", fill = "white") + 
   labs(x = "Gene Expression Levels of BPI", y = "Age") + 
   theme_economist() + 
   scale_fill_economist() + 
-  theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) 
+  theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)))
 
 #creates scatterplot with BPI and age and sets x-axis range from 0 to 150 for easier viewing
-scatter_no_outliers <- ggplot(metadata_BPI, aes(x = BPI, y = age)) + 
+suppressWarnings(scatter_no_outliers <- ggplot(metadata_BPI, aes(x = BPI, y = age)) + 
   geom_point(color = "#6794a7", fill = "white") + 
   labs(x = "Gene Expression Levels of BPI", y = "Age") + 
   theme_economist() + 
   scale_fill_economist() + 
   theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) + 
-  xlim(0, 150)
+  xlim(0, 150))
 
 #creates scatterplot of both previous plots combined
-new_scatter <- ggarrange(scatter_outliers, scatter_no_outliers,ncol=2, labels = c("A: Outliers Included", "B: Outliers Excluded")) 
+suppressWarnings(new_scatter <- ggarrange(scatter_outliers, scatter_no_outliers,ncol=2, labels = c("A: Outliers Included", "B: Outliers Excluded"))) 
 
 #adds title to the combined plot
-annotate_figure(new_scatter, top = text_grob("Gene Expression Levels of BPI vs. Age", color = "#6794a7", face = "bold", size = 14))
+suppressWarnings(annotate_figure(new_scatter, top = text_grob("Gene Expression Levels of BPI vs. Age", color = "#6794a7", face = "bold", size = 14)))
 
 #interpretation - shows the relationship between BPI gene expression and ages of individuals sampled. there is not necessarily a clear relationship that can be observed in this graph without further analysis. the points seem to be clustered towards the lower gene expression levels around ages 50-85.
 ```
@@ -78,13 +77,13 @@ unknown_removed <- metadata_BPI
 unknown_removed <- metadata_BPI[metadata_BPI$sex != " unknown", ]
 
 #creates scatterplot with BPI, sex, and mechanical ventilation
-box_outliers <- ggplot(unknown_removed,aes(x = sex,y = BPI, color = mechanical_ventilation)) + geom_boxplot() + scale_x_discrete(labels = c("Female", "Male")) + labs(x = "Sex", y = "Gene Expression Levels of BPI", color = "Mechanical Ventilation") + theme_economist() + scale_color_manual(values = c('#014d64','#6794a7')) + theme(plot.title = element_text(size=15, face="bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) 
+suppressWarnings(box_outliers <- ggplot(unknown_removed,aes(x = sex,y = BPI, color = mechanical_ventilation)) + geom_boxplot() + scale_x_discrete(labels = c("Female", "Male")) + labs(x = "Sex", y = "Gene Expression Levels of BPI", color = "Mechanical Ventilation") + theme_economist() + scale_color_manual(values = c('#014d64','#6794a7')) + theme(plot.title = element_text(size=15, face="bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2))) 
 
 #creates scatterplot with BPI, sex, and mechanical ventilation and sets y-axis range from 0 to 200 for easier viewing
-box_no_outliers <- ggplot(unknown_removed,aes(x = sex,y = BPI, color = mechanical_ventilation)) + geom_boxplot() + scale_x_discrete(labels = c("Female", "Male")) + labs(x = "Sex", y = "Gene Expression Levels of BPI", color = "Mechanical Ventilation") + theme_economist() + scale_color_manual(values = c('#014d64','#6794a7')) + theme(plot.title = element_text(size=15, face="bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) + ylim(0, 200)
+suppressWarnings(box_no_outliers <- ggplot(unknown_removed,aes(x = sex,y = BPI, color = mechanical_ventilation)) + geom_boxplot() + scale_x_discrete(labels = c("Female", "Male")) + labs(x = "Sex", y = "Gene Expression Levels of BPI", color = "Mechanical Ventilation") + theme_economist() + scale_color_manual(values = c('#014d64','#6794a7')) + theme(plot.title = element_text(size=15, face="bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) + ylim(0, 200))
 
 #creates boxplot of both previous plots combined
-new_box <- ggarrange(box_outliers, box_no_outliers,ncol=2, labels = c("A: Outliers Included", "B: Outliers Excluded"))
+suppressWarnings(new_box <- ggarrange(box_outliers, box_no_outliers,ncol=2, labels = c("A: Outliers Included", "B: Outliers Excluded")))
 
 #adds title to the combined plot
 annotate_figure(new_box, top = text_grob("BPI Expression by Sex and Mechanical Ventilation", color = "#6794a7", face = "bold", size = 14))
