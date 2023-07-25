@@ -18,8 +18,9 @@ metadata <- read.csv("QBS103_finalProject_metadata.csv", row.names = 1)
 gene_exp <- read.csv("QBS103_finalProject_geneExpression.csv", row.names = 1)
 ```
 
+
 ```{r}
-#chosen gene: BPI - bactericidal permeability increasing protein - a gene that encodes a lipopolysaccharide binding protein and helps with regulating inflammatory responses and defending against bacteria.
+#chosen gene: BPI - bactericidal permeability increasing protein - Plays a role in the immune response against bacterial infections, can kill the bacterial by targeting their cell membrane and can also increase permeability of cell membranes, encodes a lipopolysaccharide binding protein and helps with regulating inflammatory responses
 
 BPI <- gene_exp["BPI",]
 BPI <- as.data.frame(t(BPI)) #transposes the matrix
