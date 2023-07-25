@@ -19,7 +19,8 @@ gene_exp <- read.csv("QBS103_finalProject_geneExpression.csv", row.names = 1)
 ```
 
 ```{r}
-#chosen gene: BPI
+#chosen gene: BPI - bactericidal permeability increasing protein - a gene that encodes a lipopolysaccharide binding protein and helps with regulating inflammatory responses and defending against bacteria.
+
 BPI <- gene_exp["BPI",]
 BPI <- as.data.frame(t(BPI)) #transposes the matrix
 metadata_BPI <- cbind(metadata, BPI) #creates one data frame with all BPI data
@@ -29,15 +30,18 @@ head(metadata_BPI)
 
 ```{r}
 #creates histogram of BPI
+
 ggplot(metadata_BPI, aes(x = BPI)) + geom_histogram(color = "#6794a7", fill = "white", bins = 50) + 
   labs(x = "Gene Expression Levels of BPI", y = "Frequency of Occurrence", title = "Distribution of Gene Expression Levels for BPI") + 
   theme_economist() + 
   scale_fill_economist() + 
   theme(plot.title = element_text(size=15, face="bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2 ))
+
+# interpretation - shows the distribution of BPI gene expression in the samples. there are more studies with lower gene expression levels of BPI with a smaller amount of samples showing higher levels of expression levels. the majority of samples are seen below the threshold of 200.
 ```
 
 ```{r}
-#chosen continous covariate: age
+#chosen continuous covariate: age
 
 #creates scatterplot with BPI and age
 scatter_outliers <- ggplot(metadata_BPI, aes(x = BPI, y = age)) + 
@@ -61,6 +65,8 @@ new_scatter <- ggarrange(scatter_outliers, scatter_no_outliers,ncol=2, labels = 
 
 #adds title to the combined plot
 annotate_figure(new_scatter, top = text_grob("Gene Expression Levels of BPI vs. Age", color = "#6794a7", face = "bold", size = 14))
+
+#interpretation - shows the relationship between BPI gene expression and ages of individuals sampled. there is not necessarily a clear relationship that can be observed in this graph without further analysis. the points seem to be clustered towards the lower gene expression levels around ages 50-85.
 ```
 
 ```{r}
@@ -82,4 +88,5 @@ new_box <- ggarrange(box_outliers, box_no_outliers,ncol=2, labels = c("A: Outlie
 #adds title to the combined plot
 annotate_figure(new_box, top = text_grob("BPI Expression by Sex and Mechanical Ventilation", color = "#6794a7", face = "bold", size = 14))
 
+#interpretation - shows distribution of BPI gene expression across sexes and ventilation categories. from the graph on the right, we can see that the samples with mechanical ventilation have a higher mean gene expression level. this is true for both males and females. the mechanical ventilation groups have a higher iqr when compared to the groups without mechanical ventilation. the females from the study seem to have a higher mean gene expression level than the males.
 ```
