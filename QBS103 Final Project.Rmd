@@ -125,20 +125,22 @@ print(multiple_graphs)
 
 ```{r}
 #CODE WORKS FOR SCATTER
-all_graphs <- function(data, genes, gene_exp, metadata) {
+all_graphs <- function(data, genes, covariate, gene_exp, metadata) {
   graphs <- list()
   for (gene in genes) {
     gene_data <- as.numeric(t(gene_exp[gene, ]))
     metadata_gene <- cbind(metadata, gene_data)
-    metadata_gene <- metadata_gene[metadata_gene$age != " >89" & metadata_gene$age != " :" & metadata_gene$age != "NA", ]
-    metadata_gene$age <- as.numeric(metadata_gene$age)
+    metadata_gene$covariate <- as.integer(metadata_gene[[covariate]])
+    metadata_gene <- metadata_gene[!is.na(metadata_gene$covariate), ]
 
-    scatter_outliers <- ggplot(metadata_gene, aes(x = age, y = gene_data)) + 
+    scatter_outliers <- ggplot(metadata_gene, aes(x = `covariate`, y = gene_data)) + 
       geom_point(color = "#6794a7", fill = "white") + 
-      labs(x = "Age" , y = paste("Gene Expression Levels of", gene)) + 
+      labs(x = paste("", covariate) , y = paste("Gene Expression Levels of", gene), title = paste("", covariate, "vs. Gene Expression Levels of", gene)) + 
       theme_economist() + 
       scale_fill_economist() + 
-      theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50))
+      theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y = element_text(vjust = 2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50)) + 
+      ggtitle(paste("Gene Expression Levels of", gene, "vs.", covariate))
+
     
     graphs[[gene]] <- scatter_outliers
 
@@ -147,15 +149,16 @@ all_graphs <- function(data, genes, gene_exp, metadata) {
 }
 selected_genes <- c("BPI", "MPO")  # Add the gene names you want to plot
 
-multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, gene_exp = gene_exp, metadata = metadata)
+multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, covariate = "ventilator.free_days", gene_exp = gene_exp, metadata = metadata)
 
 print(multiple_graphs)
+
 
 ```
 
 ```{r}
-#COMBINED SCATTER AND BOX - WORKS
-all_graphs <- function(data, genes, gene_exp, metadata) {
+#CODE FOR COMBNIIED SCATTER AND BOX WORKS
+all_graphs <- function(data, genes, gene_exp, covariate, metadata) {
   graphs <- list()
   for (gene in genes) {
     gene_data <- as.numeric(t(gene_exp[gene, ]))
@@ -170,16 +173,17 @@ all_graphs <- function(data, genes, gene_exp, metadata) {
             axis.title.x = element_text(vjust = -0.4),
             axis.title.y = element_text(vjust = 2))
     
-    metadata_gene <- metadata_gene[metadata_gene$age != " >89" & metadata_gene$age != " :" & metadata_gene$age != "NA", ]
-    metadata_gene$age <- as.numeric(metadata_gene$age)
+    metadata_gene$covariate <- as.integer(metadata_gene[[covariate]])
+    metadata_gene <- metadata_gene[!is.na(metadata_gene$covariate), ]
 
-    scatter_outliers <- ggplot(metadata_gene, aes(x = age, y = gene_data)) + 
+    scatter_outliers <- ggplot(metadata_gene, aes(x = `covariate`, y = gene_data)) + 
       geom_point(color = "#6794a7", fill = "white") + 
-      labs(x = "Age" , y = paste("Gene Expression Levels of", gene), title = paste("Age vs. Gene Expression Levels of", gene)) + 
+      labs(x = paste("", covariate) , y = paste("Gene Expression Levels of", gene), title = paste("", covariate, "vs. Gene Expression Levels of", gene)) + 
       theme_economist() + 
       scale_fill_economist() + 
-      theme(plot.title = element_text(size=15, face="bold", margin = margin(10, 0, 10, 0), hjust = 0.5), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50))
-    
+      theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y = element_text(vjust = 2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50)) + 
+      ggtitle(paste("Gene Expression Levels of", gene, "vs.", covariate))
+
     plots <- list(box = box, scatter = scatter_outliers)
     graphs[[gene]] <- plots
     
@@ -189,7 +193,7 @@ all_graphs <- function(data, genes, gene_exp, metadata) {
   
 selected_genes <- c("BPI", "MPO")
 
-multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, gene_exp = gene_exp, metadata = metadata)
+multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, covariate = "age", gene_exp = gene_exp, metadata = metadata)
 
 for (gene in selected_genes) {
   print(multiple_graphs[[gene]]$box)
