@@ -91,16 +91,15 @@ annotate_figure(new_box, top = text_grob("BPI Expression by Sex and Mechanical V
 #interpretation - shows distribution of BPI gene expression across sexes and ventilation categories. from the graph on the right, we can see that the samples with mechanical ventilation have a higher mean gene expression level. this is true for both males and females. the mechanical ventilation groups have a higher iqr when compared to the groups without mechanical ventilation. the females from the study seem to have a higher mean gene expression level than the males.
 ```
 
-
 ```{r}
-#CODE WORKS FOR BOXPLOT 
-all_graphs <- function(data, genes, gene_exp, metadata) {
+#Code for boxplot, scatter, and histogram
+all_graphs <- function(data, genes, gene_exp, contcovariate, catcovariate1, catcovariate2, metadata) {
   graphs <- list()
   for (gene in genes) {
     gene_data <- as.numeric(t(gene_exp[gene, ]))
     metadata_gene <- cbind(metadata, gene_data)
     
-    box <- ggplot(metadata_gene, aes(x = gene_data)) +
+    hist <- ggplot(metadata_gene, aes(x = gene_data)) +
       geom_histogram(color = "#6794a7", fill = "white", bins = 50) + 
       labs(x = paste("Gene Expression Levels of", gene), y = "Total Number of Samples", title = paste("Distribution of Gene Expression Levels for", gene)) + 
       theme_economist() + 
@@ -109,82 +108,31 @@ all_graphs <- function(data, genes, gene_exp, metadata) {
             axis.title.x = element_text(vjust = -0.4),
             axis.title.y = element_text(vjust = 2))
     
-    graphs[[gene]] <- box
-  }
-  return(graphs)
-}
-  
-selected_genes <- c("APOM", "BPI")  # Add the gene names you want to plot
+    metadata_gene$contcovariate <- as.integer(metadata_gene[[contcovariate]])
+    metadata_gene <- metadata_gene[!is.na(metadata_gene$contcovariate), ]
 
-multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, gene_exp = gene_exp, metadata = metadata)
-
-print(multiple_graphs)
-
-```
-
-
-```{r}
-#CODE WORKS FOR SCATTER
-all_graphs <- function(data, genes, covariate, gene_exp, metadata) {
-  graphs <- list()
-  for (gene in genes) {
-    gene_data <- as.numeric(t(gene_exp[gene, ]))
-    metadata_gene <- cbind(metadata, gene_data)
-    metadata_gene$covariate <- as.integer(metadata_gene[[covariate]])
-    metadata_gene <- metadata_gene[!is.na(metadata_gene$covariate), ]
-
-    scatter_outliers <- ggplot(metadata_gene, aes(x = `covariate`, y = gene_data)) + 
+    scatter <- ggplot(metadata_gene, aes(x = contcovariate, y = gene_data)) + 
       geom_point(color = "#6794a7", fill = "white") + 
-      labs(x = paste("", covariate) , y = paste("Gene Expression Levels of", gene), title = paste("", covariate, "vs. Gene Expression Levels of", gene)) + 
+      labs(x = paste("", contcovariate) , y = paste("Gene Expression Levels of", gene), title = paste("", contcovariate, "vs. Gene Expression Levels of", gene)) + 
       theme_economist() + 
       scale_fill_economist() + 
-      theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y = element_text(vjust = 2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50)) + 
-      ggtitle(paste("Gene Expression Levels of", gene, "vs.", covariate))
-
+      theme(plot.title = element_text(size = 15, face = "bold", margin = margin(10, 0, 10, 0), hjust = 0.5), axis.title.x = element_text(vjust=-0.40), axis.title.y = element_text(vjust = 2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50)) + 
+      ggtitle(paste("Gene Expression Levels of", gene, "vs.", contcovariate))
     
-    graphs[[gene]] <- scatter_outliers
+    metadata_gene$catcovariate1 <- as.factor(metadata_gene[[catcovariate1]])
+    metadata_gene$catcovariate2 <- as.factor(metadata_gene[[catcovariate2]])
+    metadata_gene <- metadata_gene[!is.na(metadata_gene$catcovariate1) & !is.na(metadata_gene$catcovariate2) & (metadata_gene$catcovariate1 != " unknown") * (metadata_gene$catcovariate2 != " unknown"), ]
 
-  }
-  return(graphs)
-}
-selected_genes <- c("BPI", "MPO")  # Add the gene names you want to plot
-
-multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, covariate = "ventilator.free_days", gene_exp = gene_exp, metadata = metadata)
-
-print(multiple_graphs)
-
-
-```
-
-```{r}
-#CODE FOR COMBNIIED SCATTER AND BOX WORKS
-all_graphs <- function(data, genes, gene_exp, covariate, metadata) {
-  graphs <- list()
-  for (gene in genes) {
-    gene_data <- as.numeric(t(gene_exp[gene, ]))
-    metadata_gene <- cbind(metadata, gene_data)
-    
-    box <- ggplot(metadata_gene, aes(x = gene_data)) +
-      geom_histogram(color = "#6794a7", fill = "white", bins = 50) + 
-      labs(x = paste("Gene Expression Levels of", gene), y = "Total Number of Samples", title = paste("Distribution of Gene Expression Levels for", gene)) + 
+    box <- ggplot(metadata_gene, aes(x = catcovariate1, y = gene_data, color = catcovariate2)) + 
+      geom_boxplot() + 
+      scale_x_discrete(labels = levels(metadata_gene$catcovariate1)) + 
+      labs(x = paste("", catcovariate1), y = paste("Gene Expression Levels of", gene), color = paste("", catcovariate2)) + 
       theme_economist() + 
-      scale_fill_economist() + 
-      theme(plot.title = element_text(size = 15, face = "bold", margin = margin(10, 0, 10, 0), hjust = 0.5),
-            axis.title.x = element_text(vjust = -0.4),
-            axis.title.y = element_text(vjust = 2))
-    
-    metadata_gene$covariate <- as.integer(metadata_gene[[covariate]])
-    metadata_gene <- metadata_gene[!is.na(metadata_gene$covariate), ]
+      scale_color_manual(values = c('#014d64','#6794a7')) + 
+      theme(plot.title = element_text(size = 15, face ="bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y = element_text(vjust=2)) +
+      ggtitle(paste(gene, "Expression by", catcovariate1, "and", catcovariate2))
 
-    scatter_outliers <- ggplot(metadata_gene, aes(x = `covariate`, y = gene_data)) + 
-      geom_point(color = "#6794a7", fill = "white") + 
-      labs(x = paste("", covariate) , y = paste("Gene Expression Levels of", gene), title = paste("", covariate, "vs. Gene Expression Levels of", gene)) + 
-      theme_economist() + 
-      scale_fill_economist() + 
-      theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y = element_text(vjust = 2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50)) + 
-      ggtitle(paste("Gene Expression Levels of", gene, "vs.", covariate))
-
-    plots <- list(box = box, scatter = scatter_outliers)
+    plots <- list(hist = hist, scatter = scatter, box = box)
     graphs[[gene]] <- plots
     
   }
@@ -193,10 +141,19 @@ all_graphs <- function(data, genes, gene_exp, covariate, metadata) {
   
 selected_genes <- c("BPI", "MPO")
 
-multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, covariate = "age", gene_exp = gene_exp, metadata = metadata)
+multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, contcovariate = "age", catcovariate1 = "sex", catcovariate2 = "disease_status", gene_exp = gene_exp, metadata = metadata)
 
 for (gene in selected_genes) {
-  print(multiple_graphs[[gene]]$box)
+  print(multiple_graphs[[gene]]$hist)
   print(multiple_graphs[[gene]]$scatter)
+  print(multiple_graphs[[gene]]$box)
 }
+
+```
+
+```{r}
+additional_genes <- c("GPLD1", "AAK1")
+selected_genes <- c("BPI", "MPO", "GPLD1", "AAK1")
+multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, contcovariate = "age", catcovariate1 = "sex", catcovariate2 = "mechanical_ventilation", gene_exp = gene_exp, metadata = metadata)
+print(multiple_graphs)
 ```
