@@ -20,7 +20,7 @@ gene_exp <- read.csv("QBS103_finalProject_geneExpression.csv", row.names = 1)
 
 
 ```{r}
-#chosen gene: BPI - bactericidal permeability increasing protein - Plays a role in the immune response against bacterial infections, can kill the bacterial by targeting their cell membrane and can also increase permeability of cell membranes, encodes a lipopolysaccharide binding protein and helps with regulating inflammatory responses
+#chosen gene: BPI - bactericidal permeability increasing protein - Plays a role in the immune response against bacterial infections, can kill the bacterial by targeting their cell membrane and can also increase permeability of cell membranes, encodes a lipopolysaccharide binding protein and helps with regulating inflammatory responses - information from https://www.ncbi.nlm.nih.gov/gene/671#summary
 
 BPI <- gene_exp["BPI",]
 BPI <- as.data.frame(t(BPI)) #transposes the matrix
@@ -32,7 +32,7 @@ suppressWarnings(metadata_BPI$age <- as.integer(metadata_BPI$age))
 #creates histogram of BPI
 
 ggplot(metadata_BPI, aes(x = BPI)) + geom_histogram(color = "#6794a7", fill = "white", bins = 50) + 
-  labs(x = "Gene Expression Levels of BPI", y = "Frequency of Occurrence", title = "Distribution of Gene Expression Levels for BPI") + 
+  labs(x = "Gene Expression Levels of BPI", y = "Total Number of Samples", title = "Distribution of Gene Expression Levels for BPI") + 
   theme_economist() + 
   scale_fill_economist() + 
   theme(plot.title = element_text(size=15, face="bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2 ))
@@ -64,7 +64,7 @@ suppressWarnings(scatter_no_outliers <- ggplot(metadata_BPI, aes(x = BPI, y = ag
 suppressWarnings(new_scatter <- ggarrange(scatter_outliers, scatter_no_outliers,ncol=2, labels = c("A: Outliers Included", "B: Outliers Excluded"))) 
 
 #adds title to the combined plot
-suppressWarnings(annotate_figure(new_scatter, top = text_grob("Gene Expression Levels of BPI vs. Age", color = "#6794a7", face = "bold", size = 14)))
+suppressWarnings(annotate_figure(new_scatter, top = text_grob("Age vs. Gene Expression Levels of BPI", color = "#6794a7", face = "bold", size = 14)))
 
 #interpretation - shows the relationship between BPI gene expression and ages of individuals sampled. there is not necessarily a clear relationship that can be observed in this graph without further analysis. the points seem to be clustered towards the lower gene expression levels around ages 50-85.
 ```
@@ -89,4 +89,110 @@ suppressWarnings(new_box <- ggarrange(box_outliers, box_no_outliers,ncol=2, labe
 annotate_figure(new_box, top = text_grob("BPI Expression by Sex and Mechanical Ventilation", color = "#6794a7", face = "bold", size = 14))
 
 #interpretation - shows distribution of BPI gene expression across sexes and ventilation categories. from the graph on the right, we can see that the samples with mechanical ventilation have a higher mean gene expression level. this is true for both males and females. the mechanical ventilation groups have a higher iqr when compared to the groups without mechanical ventilation. the females from the study seem to have a higher mean gene expression level than the males.
+```
+
+
+```{r}
+#CODE WORKS FOR BOXPLOT 
+all_graphs <- function(data, genes, gene_exp, metadata) {
+  graphs <- list()
+  for (gene in genes) {
+    gene_data <- as.numeric(t(gene_exp[gene, ]))
+    metadata_gene <- cbind(metadata, gene_data)
+    
+    box <- ggplot(metadata_gene, aes(x = gene_data)) +
+      geom_histogram(color = "#6794a7", fill = "white", bins = 50) + 
+      labs(x = paste("Gene Expression Levels of", gene), y = "Total Number of Samples", title = paste("Distribution of Gene Expression Levels for", gene)) + 
+      theme_economist() + 
+      scale_fill_economist() + 
+      theme(plot.title = element_text(size = 15, face = "bold", margin = margin(10, 0, 10, 0), hjust = 0.5),
+            axis.title.x = element_text(vjust = -0.4),
+            axis.title.y = element_text(vjust = 2))
+    
+    graphs[[gene]] <- box
+  }
+  return(graphs)
+}
+  
+selected_genes <- c("APOM", "BPI")  # Add the gene names you want to plot
+
+multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, gene_exp = gene_exp, metadata = metadata)
+
+print(multiple_graphs)
+
+```
+
+
+```{r}
+#CODE WORKS FOR SCATTER
+all_graphs <- function(data, genes, gene_exp, metadata) {
+  graphs <- list()
+  for (gene in genes) {
+    gene_data <- as.numeric(t(gene_exp[gene, ]))
+    metadata_gene <- cbind(metadata, gene_data)
+    metadata_gene <- metadata_gene[metadata_gene$age != " >89" & metadata_gene$age != " :" & metadata_gene$age != "NA", ]
+    metadata_gene$age <- as.numeric(metadata_gene$age)
+
+    scatter_outliers <- ggplot(metadata_gene, aes(x = age, y = gene_data)) + 
+      geom_point(color = "#6794a7", fill = "white") + 
+      labs(x = "Age" , y = paste("Gene Expression Levels of", gene)) + 
+      theme_economist() + 
+      scale_fill_economist() + 
+      theme(plot.title = element_text(size=12, face="bold", margin = margin(10, 0, 10, 0)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50))
+    
+    graphs[[gene]] <- scatter_outliers
+
+  }
+  return(graphs)
+}
+selected_genes <- c("BPI", "MPO")  # Add the gene names you want to plot
+
+multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, gene_exp = gene_exp, metadata = metadata)
+
+print(multiple_graphs)
+
+```
+
+```{r}
+#COMBINED SCATTER AND BOX - WORKS
+all_graphs <- function(data, genes, gene_exp, metadata) {
+  graphs <- list()
+  for (gene in genes) {
+    gene_data <- as.numeric(t(gene_exp[gene, ]))
+    metadata_gene <- cbind(metadata, gene_data)
+    
+    box <- ggplot(metadata_gene, aes(x = gene_data)) +
+      geom_histogram(color = "#6794a7", fill = "white", bins = 50) + 
+      labs(x = paste("Gene Expression Levels of", gene), y = "Total Number of Samples", title = paste("Distribution of Gene Expression Levels for", gene)) + 
+      theme_economist() + 
+      scale_fill_economist() + 
+      theme(plot.title = element_text(size = 15, face = "bold", margin = margin(10, 0, 10, 0), hjust = 0.5),
+            axis.title.x = element_text(vjust = -0.4),
+            axis.title.y = element_text(vjust = 2))
+    
+    metadata_gene <- metadata_gene[metadata_gene$age != " >89" & metadata_gene$age != " :" & metadata_gene$age != "NA", ]
+    metadata_gene$age <- as.numeric(metadata_gene$age)
+
+    scatter_outliers <- ggplot(metadata_gene, aes(x = age, y = gene_data)) + 
+      geom_point(color = "#6794a7", fill = "white") + 
+      labs(x = "Age" , y = paste("Gene Expression Levels of", gene), title = paste("Age vs. Gene Expression Levels of", gene)) + 
+      theme_economist() + 
+      scale_fill_economist() + 
+      theme(plot.title = element_text(size=15, face="bold", margin = margin(10, 0, 10, 0), hjust = 0.5), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) + scale_x_continuous(breaks = seq(0, 100, by = 10)) + scale_y_continuous(breaks = seq(0, 500, by = 50))
+    
+    plots <- list(box = box, scatter = scatter_outliers)
+    graphs[[gene]] <- plots
+    
+  }
+  return(graphs)
+}
+  
+selected_genes <- c("BPI", "MPO")
+
+multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, gene_exp = gene_exp, metadata = metadata)
+
+for (gene in selected_genes) {
+  print(multiple_graphs[[gene]]$box)
+  print(multiple_graphs[[gene]]$scatter)
+}
 ```
