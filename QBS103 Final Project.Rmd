@@ -14,13 +14,13 @@ library(ggpubr)
 library(gridExtra)
 library(dplyr)
 library(ggtext)
+library(RColorBrewer)
 ```
 
 ```{r}
 metadata <- read.csv("QBS103_finalProject_metadata.csv", row.names = 1)
 gene_exp <- read.csv("QBS103_finalProject_geneExpression.csv", row.names = 1)
 ```
-
 
 ```{r}
 #chosen gene: BPI - bactericidal permeability increasing protein - Plays a role in the immune response against bacterial infections, can kill the bacterial by targeting their cell membrane and can also increase permeability of cell membranes, encodes a lipopolysaccharide binding protein and helps with regulating inflammatory responses - information from https://www.ncbi.nlm.nih.gov/gene/671#summary
@@ -105,13 +105,16 @@ all_graphs <- function(data, genes, gene_exp, contcovariate, catcovariate1, catc
     
     #relabels data within a few covariates for better keys in boxplots
     metadata_gene$icu_status <- ifelse(metadata_gene$icu_status == " yes", "in icu", "not in icu")
-    metadata_gene$mechanical_ventilation <- ifelse(metadata_gene$mechanical_ventilation == " yes", "on mechanical ventilation", "not on mechanical ventilation")
+    metadata_gene$mechanical_ventilation <- ifelse(metadata_gene$mechanical_ventilation == " yes", "with ventilation", "without ventilation")
     metadata_gene$disease_status <- ifelse(metadata_gene$disease_status == "disease state: COVID-19", "COVID-19", "not COVID-19")
     
     
     #creates histogram
     hist <- ggplot(metadata_gene, aes(x = gene_data)) +
       geom_histogram(color = "#76c0c1", fill = "white", bins = 50) + 
+      geom_vline(xintercept = median(gene_data), #adds mean line
+             col = "#014d64",
+             lwd = .5) +
       labs(x = substitute(paste("Gene Expression Levels of ", italic(gene)), list(gene = gene)), #substitute done to use italics
            y = "Total Number of Samples", 
            title = substitute(paste("Distribution of Gene Expression Levels for ", italic(gene)), list(gene = gene))) +
@@ -127,7 +130,7 @@ all_graphs <- function(data, genes, gene_exp, contcovariate, catcovariate1, catc
     metadata_gene <- metadata_gene[!is.na(metadata_gene$contcovariate), ]
 
     scatter <- ggplot(metadata_gene, aes(x = contcovariate, y = gene_data)) + 
-      geom_point(color = "#76c0c1", fill = "white") + 
+      geom_point(color = "#014d64", fill = "white", alpha = 0.7) + 
       labs(x = paste("", contcovariate) , y = substitute(paste("Gene Expression Levels of ", italic(gene)), list(gene = gene))) +
       theme_economist() + 
       scale_fill_economist() + 
@@ -156,7 +159,7 @@ all_graphs <- function(data, genes, gene_exp, contcovariate, catcovariate1, catc
   return(graphs)
 }
   
-selected_genes <- c("BPI", "MPO")
+selected_genes <- c("BPI", "CD24")
 
 multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, contcovariate = "age", catcovariate1 = "mechanical_ventilation", catcovariate2 = "disease_status", gene_exp = gene_exp, metadata = metadata)
 
@@ -171,7 +174,226 @@ for (gene in selected_genes) {
 ```{r}
 #calling the function
 additional_genes <- c("GPLD1", "AAK1")
-selected_genes <- c("BPI", "MPO", "GPLD1", "AAK1")
+selected_genes <- c("BPI", "MPO", "CD24")
 multiple_graphs <- all_graphs(data = gene_exp, genes = selected_genes, contcovariate = "age", catcovariate1 = "sex", catcovariate2 = "mechanical_ventilation", gene_exp = gene_exp, metadata = metadata)
 print(multiple_graphs)
+```
+
+```{r}
+#code adapted from class
+library(knitr)
+buildTableOne <- function(data,varList,nonnormVars = '',catVars = '') {
+  
+  # Define an empty table
+  table1 <- matrix(nrow = 0,ncol = 2)
+  # Keep track of rows to indent
+  indentRows <- c()
+  
+  # Loop through all variables
+  for (var in varList) {
+    
+    # Define vector of variable values
+    x <- data[,var]
+    
+    # Identify if non-normal
+    if (var %in% nonnormVars) {
+      
+      # Calculate individual values
+      myMedian <- round(median(x))
+      myIQR1 <- round(quantile(x,1/4),digits = 2)
+      myIQR2 <- round(quantile(x,3/4),digits = 2)
+      # Combine values
+      value <- paste0(myMedian,' [',myIQR1,', ',myIQR2,']')
+      
+      # Define new row
+      newRow <- c(paste0('**',var,'** Median [IQR]'),value)
+      
+      # Add row to data frame
+      table1 <- rbind(table1,newRow)
+      
+    }
+    
+    # Identify if categorical
+    if (var %in% catVars) {
+      
+      # Define new row for overall variable
+      newRow <- c(paste0('**',var,'** n (%)'),'')
+      # Add row to data frame
+      table1 <- rbind(table1,newRow)
+      
+      # Loop through levels of variable
+      for (level in levels(x)) {
+        # Calculate n and perc
+        n <- sum(x == level)
+        perc <- round(n/(length(x)) * 100,digits = 2)
+        
+        # Combine values
+        value <- paste0(n,' (',perc,')')
+        
+        # Define new row
+        newRow <- c(level,value)
+        # Add row to data frame
+        table1 <- rbind(table1,newRow)
+        # Add index to indented rows
+        indentRows <- c(indentRows,nrow(table1))
+        
+        
+      }
+    }
+    
+    # Otherwise treat as normally distributed
+    if (!(var %in% c(nonnormVars,catVars))) {
+      
+      # Calculate individual values
+      myMean <- round(mean(x),2)
+      mySD <- round(sd(x),2)
+      # Combine values
+      value <- paste0(myMean,' (',mySD,')')
+      
+      # Define new row
+      newRow <- c(paste0('**',var,'** Mean (sd)'),value)
+      
+      # Add row to data frame
+      table1 <- rbind(table1,newRow)
+      
+    }
+  }
+  write.csv(table1, file = "table.csv")
+}
+```
+
+```{r}
+#cleans data further
+#clean variable names
+
+clean_data <- metadata_BPI[(metadata_BPI$sex != " unknown") & (metadata_BPI$procalcitonin.ng.ml.. != "unknown") & (metadata_BPI$sex != " unknown") & !is.na(metadata_BPI$age), ]
+clean_data$procalcitonin.ng.ml.. <- as.numeric(clean_data$procalcitonin.ng.ml..)
+clean_data$age <- as.numeric(clean_data$age)
+clean_data$icu_status <- as.factor(clean_data$icu_status)
+clean_data$sex <- as.factor(clean_data$sex)
+clean_data$mechanical_ventilation <- as.factor(clean_data$mechanical_ventilation)
+
+buildTableOne(data = clean_data, varList = c('age','ventilator.free_days','procalcitonin.ng.ml..','sex', 'mechanical_ventilation','icu_status'), catVars = c('sex','mechanical_ventilation','icu_status'))
+
+```
+
+```{r}
+cor.test(metadata_BPI$age, metadata_BPI$BPI)
+
+#sets a new color palette
+greens <- brewer.pal(9, "Greens")
+
+
+unknown_removed$MechanicalVentilation <- unknown_removed$mechanical_ventilation
+unknown_removed$MechanicalVentilation <- as.factor(unknown_removed$MechanicalVentilation)
+unknown_removed$MechanicalVentilation <- gsub(" yes", "Required", unknown_removed$MechanicalVentilation)
+unknown_removed$MechanicalVentilation <- gsub(" no", "Not Required", unknown_removed$MechanicalVentilation)
+
+
+
+#calculates thhe median
+median_value <- median(metadata_BPI$BPI)
+
+#creates histogram
+ggplot(metadata_BPI, aes(x = BPI)) + 
+  geom_histogram(color = "black", fill = greens[3], bins = 50) +
+  geom_vline(aes(xintercept = median_value), color = greens[9], linetype = "dashed", size = .5) +  #adds median line
+  annotate("text", x = median_value + 55, y = 30, label = paste("Median =", median_value), color = greens[9], vjust = -1, size = 3.5) +
+  labs(x = expression(paste("Gene Expression Levels of ", italic("BPI"))), y = "Total Number of Samples", title = expression(paste("Distribution of Gene Expression Levels for ", italic("BPI")))) + 
+  theme_classic() + 
+  scale_fill_manual(values = c(greens[3])) +
+  scale_color_manual(values = c(greens[5])) +  
+  theme(plot.title = element_text(size = 15, face = "bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust = -0.40), axis.title.y = element_text(vjust=2))
+
+#creates scatterplot
+ggplot(metadata_BPI, aes(x = age, y = BPI)) + 
+  geom_point(color = greens[4], fill = "white", alpha = 0.8) + 
+  geom_smooth(method = "lm", se = FALSE, color = greens[9], size = .5) +
+  annotate("text", x = 20, y = 80, label = paste("y =", round(coef(lm(BPI ~ age, data = metadata_BPI))[2], 2), "x +", round(coef(lm(BPI ~ age, data = metadata_BPI))[1], 2)), color = greens[9], hjust = 0) +
+  stat_cor(method = "pearson", label.x = 20, color = greens[9]) +
+  labs(x = "Age", y = expression(paste("Gene Expression Levels of ", italic("BPI"))), title = expression(paste("Gene Expression Levels of ", italic("BPI "), "over Age"))) + 
+  theme_classic() +
+  scale_color_manual(values = c(greens[4])) +
+  scale_fill_manual(values = "white") + 
+  theme(plot.title = element_text(size = 15, face ="bold", margin = margin(10, 0, 10, 0), hjust = 0.5), axis.title.x = element_text(vjust = -0.40), axis.title.y = element_text(vjust = 2))
+
+#creates boxplot
+#change legend to top
+ggplot(unknown_removed, aes(x = sex, y = BPI, color = MechanicalVentilation)) + 
+  geom_boxplot() + 
+  scale_x_discrete(labels = c("Female", "Male")) + 
+  theme(plot.title = element_text(size = 15, face = "bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) +
+  labs(x = "Sex", y = expression(paste("Gene Expression Levels of ", italic("BPI"))), color = "Mechanical Ventilation", title = expression(paste(italic("             BPI "), "Gene Expression Levels by Sex and Mechanical Ventiation"))) +
+  theme_classic() + 
+  scale_color_manual(values = c(greens[4], greens[9])) +
+  scale_fill_manual(values = "white") +
+  theme(legend.position = "top")
+```
+
+```{r}
+library(pheatmap)
+blues <- brewer.pal(9, "Blues")
+yellows <- brewer.pal(9, "YlOrRd")
+
+chooseten <- gene_exp[c("BPI", "MPO", "VWF", "A1CF", "AAMP", "ABCA2", "ABHD4", "AARD", "DEFA1", "LCN2"),]
+chooseten <- as.data.frame(t(chooseten)) 
+ten_genes <- cbind(metadata, chooseten) #creates one data frame with all ten gene data
+ten_genes$sex <- gsub(" male", "Male", ten_genes$sex)
+ten_genes$sex <- gsub(" female", "Female", ten_genes$sex)
+ten_genes$mechanical_ventilation <- gsub(" no", "No", ten_genes$mechanical_ventilation)
+ten_genes$mechanical_ventilation <- gsub(" yes", "Yes", ten_genes$mechanical_ventilation)
+
+
+
+ten_genes_exp <- ten_genes[,-c(1:24)]
+scaled <- scale(ten_genes_exp)
+
+ten_genes <- ten_genes %>% filter(!grepl('unknown', sex)) #filtering unknown in sex
+
+ten_genes$sex <- as.factor(ten_genes$sex)
+ten_genes$mechanical_ventilation <- as.factor(ten_genes$mechanical_ventilation)
+
+annotationData <- data.frame(
+  row.names = rownames(ten_genes),
+  'Mechanical.Ventilation' = ten_genes$mechanical_ventilation,
+  'Sex' = ten_genes$sex
+)
+
+annotationColors <- list(
+  'Mechanical.Ventilation' = c('Yes' = blues[3], 'No' = blues[5]),
+  'Sex' = c('Female' = yellows[3], 'Male' = yellows[5])
+)
+
+pheatmap(
+  scaled,
+  color = greens,
+  cluster_rows = TRUE,
+  cluster_cols = TRUE,
+  fontsize = 8,
+  main = "Gene Expression Heatmap by Sex and Mechanical Ventilation",
+  show_rownames = FALSE,
+  annotation_row = annotationData,      
+  annotation_colors = annotationColors
+)
+```
+
+```{r}
+library(ggplot2)
+library(hexbin)
+hex <- metadata_BPI[(metadata_BPI$procalcitonin.ng.ml.. != "unknown") & (metadata_BPI$lactate.mmol.l. != " unknown") & (metadata_BPI$ferritin.ng.ml. != " unknown"), ]
+hex$procalcitonin.ng.ml.. <- as.numeric(hex$procalcitonin.ng.ml..)
+hex$lactate.mmol.l. <- as.numeric(hex$lactate.mmol.l.)
+hex$ferritin.ng.ml. <- as.numeric(hex$ferritin.ng.ml.)
+hex$disease_status <- gsub("disease state: COVID-19", "COVID-19", hex$disease_status)
+hex$disease_status <- gsub("disease state: non-COVID-19", "Non-COVID-19", hex$disease_status)
+
+
+ggplot(hex, aes(x = age, y = BPI)) +
+  geom_hex(binwidth = c(1.8, 40)) +
+  labs(x = "Age", y = "Gene Expression", title = expression(paste("              Hexbin Plot of Age and Gene Expression of ", italic("BPI")))) +
+  theme_classic() +
+  theme(legend.position = "top") +
+  scale_fill_gradientn(colors = greens[3:9], name = "Counts")
+
+
 ```
