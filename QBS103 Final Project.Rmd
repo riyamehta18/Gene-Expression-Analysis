@@ -1,8 +1,8 @@
 ---
 title: "QBS103 Final Project"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 date: "2023-07-23"
 ---
 
@@ -15,6 +15,8 @@ library(gridExtra)
 library(dplyr)
 library(ggtext)
 library(RColorBrewer)
+library(pheatmap)
+library(hexbin)
 ```
 
 ```{r}
@@ -264,8 +266,6 @@ buildTableOne <- function(data,varList,nonnormVars = '',catVars = '') {
 
 ```{r}
 #cleans data further
-#clean variable names
-
 clean_data <- metadata_BPI[(metadata_BPI$sex != " unknown") & (metadata_BPI$procalcitonin.ng.ml.. != "unknown") & (metadata_BPI$sex != " unknown") & !is.na(metadata_BPI$age), ]
 clean_data$procalcitonin.ng.ml.. <- as.numeric(clean_data$procalcitonin.ng.ml..)
 clean_data$age <- as.numeric(clean_data$age)
@@ -273,25 +273,23 @@ clean_data$icu_status <- as.factor(clean_data$icu_status)
 clean_data$sex <- as.factor(clean_data$sex)
 clean_data$mechanical_ventilation <- as.factor(clean_data$mechanical_ventilation)
 
+#creates a table for BPI and saves as a csv
 buildTableOne(data = clean_data, varList = c('age','ventilator.free_days','procalcitonin.ng.ml..','sex', 'mechanical_ventilation','icu_status'), catVars = c('sex','mechanical_ventilation','icu_status'))
-
 ```
 
 ```{r}
-cor.test(metadata_BPI$age, metadata_BPI$BPI)
-
-#sets a new color palette
+#sets new color palettes
 greens <- brewer.pal(9, "Greens")
+blues <- brewer.pal(9, "Blues")
+yellows <- brewer.pal(9, "Reds")
 
-
+#cleans data further for boxplot
 unknown_removed$MechanicalVentilation <- unknown_removed$mechanical_ventilation
 unknown_removed$MechanicalVentilation <- as.factor(unknown_removed$MechanicalVentilation)
 unknown_removed$MechanicalVentilation <- gsub(" yes", "Required", unknown_removed$MechanicalVentilation)
 unknown_removed$MechanicalVentilation <- gsub(" no", "Not Required", unknown_removed$MechanicalVentilation)
 
-
-
-#calculates thhe median
+#calculates the median for histogram
 median_value <- median(metadata_BPI$BPI)
 
 #creates histogram
@@ -307,63 +305,67 @@ ggplot(metadata_BPI, aes(x = BPI)) +
 
 #creates scatterplot
 ggplot(metadata_BPI, aes(x = age, y = BPI)) + 
-  geom_point(color = greens[4], fill = "white", alpha = 0.8) + 
+  geom_point(color = greens[5], fill = "white", alpha = 0.8) + 
   geom_smooth(method = "lm", se = FALSE, color = greens[9], size = .5) +
   annotate("text", x = 20, y = 80, label = paste("y =", round(coef(lm(BPI ~ age, data = metadata_BPI))[2], 2), "x +", round(coef(lm(BPI ~ age, data = metadata_BPI))[1], 2)), color = greens[9], hjust = 0) +
   stat_cor(method = "pearson", label.x = 20, color = greens[9]) +
   labs(x = "Age", y = expression(paste("Gene Expression Levels of ", italic("BPI"))), title = expression(paste("Gene Expression Levels of ", italic("BPI "), "over Age"))) + 
   theme_classic() +
-  scale_color_manual(values = c(greens[4])) +
+  scale_color_manual(values = c(greens[5])) +
   scale_fill_manual(values = "white") + 
   theme(plot.title = element_text(size = 15, face ="bold", margin = margin(10, 0, 10, 0), hjust = 0.5), axis.title.x = element_text(vjust = -0.40), axis.title.y = element_text(vjust = 2))
 
 #creates boxplot
-#change legend to top
 ggplot(unknown_removed, aes(x = sex, y = BPI, color = MechanicalVentilation)) + 
   geom_boxplot() + 
   scale_x_discrete(labels = c("Female", "Male")) + 
   theme(plot.title = element_text(size = 15, face = "bold", margin = margin(10, 0, 10, 0), hjust = (0.5)), axis.title.x = element_text(vjust=-0.40), axis.title.y= element_text(vjust=2)) +
   labs(x = "Sex", y = expression(paste("Gene Expression Levels of ", italic("BPI"))), color = "Mechanical Ventilation", title = expression(paste(italic("             BPI "), "Gene Expression Levels by Sex and Mechanical Ventiation"))) +
   theme_classic() + 
-  scale_color_manual(values = c(greens[4], greens[9])) +
+  scale_color_manual(values = c(greens[5], greens[9])) +
   scale_fill_manual(values = "white") +
   theme(legend.position = "top")
 ```
 
 ```{r}
-library(pheatmap)
-blues <- brewer.pal(9, "Blues")
-yellows <- brewer.pal(9, "YlOrRd")
-
 chooseten <- gene_exp[c("BPI", "MPO", "VWF", "A1CF", "AAMP", "ABCA2", "ABHD4", "AARD", "DEFA1", "LCN2"),]
-chooseten <- as.data.frame(t(chooseten)) 
-ten_genes <- cbind(metadata, chooseten) #creates one data frame with all ten gene data
+chooseten <- as.data.frame(t(chooseten))
+
+#creates one data frame with all ten gene data
+ten_genes <- cbind(metadata, chooseten)
+
+#recodes to fix labeling in legend
 ten_genes$sex <- gsub(" male", "Male", ten_genes$sex)
 ten_genes$sex <- gsub(" female", "Female", ten_genes$sex)
 ten_genes$mechanical_ventilation <- gsub(" no", "No", ten_genes$mechanical_ventilation)
 ten_genes$mechanical_ventilation <- gsub(" yes", "Yes", ten_genes$mechanical_ventilation)
 
-
-
 ten_genes_exp <- ten_genes[,-c(1:24)]
+
+#euclidean scaling
 scaled <- scale(ten_genes_exp)
 
-ten_genes <- ten_genes %>% filter(!grepl('unknown', sex)) #filtering unknown in sex
+#filtering unknown in sex
+ten_genes <- ten_genes %>% filter(!grepl('unknown', sex))
 
+#converts variables to factors
 ten_genes$sex <- as.factor(ten_genes$sex)
 ten_genes$mechanical_ventilation <- as.factor(ten_genes$mechanical_ventilation)
 
+#creates annotations
 annotationData <- data.frame(
   row.names = rownames(ten_genes),
   'Mechanical.Ventilation' = ten_genes$mechanical_ventilation,
   'Sex' = ten_genes$sex
 )
 
+#creates color palettes for annotations
 annotationColors <- list(
   'Mechanical.Ventilation' = c('Yes' = blues[3], 'No' = blues[5]),
   'Sex' = c('Female' = yellows[3], 'Male' = yellows[5])
 )
 
+#creates heatmap
 pheatmap(
   scaled,
   color = greens,
@@ -378,8 +380,7 @@ pheatmap(
 ```
 
 ```{r}
-library(ggplot2)
-library(hexbin)
+#creates new dataframe and cleans and recodes data
 hex <- metadata_BPI[(metadata_BPI$procalcitonin.ng.ml.. != "unknown") & (metadata_BPI$lactate.mmol.l. != " unknown") & (metadata_BPI$ferritin.ng.ml. != " unknown"), ]
 hex$procalcitonin.ng.ml.. <- as.numeric(hex$procalcitonin.ng.ml..)
 hex$lactate.mmol.l. <- as.numeric(hex$lactate.mmol.l.)
@@ -387,13 +388,11 @@ hex$ferritin.ng.ml. <- as.numeric(hex$ferritin.ng.ml.)
 hex$disease_status <- gsub("disease state: COVID-19", "COVID-19", hex$disease_status)
 hex$disease_status <- gsub("disease state: non-COVID-19", "Non-COVID-19", hex$disease_status)
 
-
+#creates hexbin plot
 ggplot(hex, aes(x = age, y = BPI)) +
   geom_hex(binwidth = c(1.8, 40)) +
   labs(x = "Age", y = "Gene Expression", title = expression(paste("              Hexbin Plot of Age and Gene Expression of ", italic("BPI")))) +
   theme_classic() +
   theme(legend.position = "top") +
   scale_fill_gradientn(colors = greens[3:9], name = "Counts")
-
-
 ```
