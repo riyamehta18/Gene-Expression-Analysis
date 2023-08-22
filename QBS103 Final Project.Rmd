@@ -1,8 +1,8 @@
 ---
 title: "QBS103 Final Project"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 date: "2023-07-23"
 ---
 
@@ -281,7 +281,7 @@ buildTableOne(data = clean_data, varList = c('age','ventilator.free_days','proca
 #sets new color palettes
 greens <- brewer.pal(9, "Greens")
 blues <- brewer.pal(9, "Blues")
-yellows <- brewer.pal(9, "Reds")
+yellows <- brewer.pal(9, "Oranges")
 
 #cleans data further for boxplot
 unknown_removed$MechanicalVentilation <- unknown_removed$mechanical_ventilation
