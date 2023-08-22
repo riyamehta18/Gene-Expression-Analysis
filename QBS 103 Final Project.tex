@@ -1,0 +1,120 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{geometry}
+\geometry{total = {8.5in,11in}, margin = 0.5in}
+
+\title{QBS 103: Final Project}
+\author{Riya Mehta}
+\date{22 August 2023}
+\usepackage[table,xcdraw]{xcolor}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{Chosen Gene: \emph{BPI}}
+The datasets analyzed in this project are collected from RNA-seq and mass spectrometry of diverse COVID-19 patients \cite{Overmyer2021}. Different genes are involved in the data collection process. \emph{BPI} or Bactericidal Permeability Increasing protein, my chosen gene, plays a role in the immune response against bacterial infections. It can kill the bacteria by targeting their cell membranes and can also increase permeability of the cell membranes. Additionally, \emph{BPI} encodes a lipopolysaccharide binding protein which helps with regulating inflammatory responses \cite{NCBI}.
+
+\section{Summary Statistics of \emph{BPI}}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|
+>{\columncolor[HTML]{FFFFFF}}l 
+>{\columncolor[HTML]{FFFFFF}}l 
+>{\columncolor[HTML]{FFFFFF}}l |}
+\hline
+\multicolumn{3}{|c|}{\cellcolor[HTML]{C7E9C0}\textbf{Summary Statistics for \emph{BPI} (n = 99)}}                                                                                                                   \\ \hline
+\multicolumn{1}{|c|}{\cellcolor[HTML]{FFFFFF}\textbf{Variable}}              & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{Statistic}} & \multicolumn{1}{c|}{\cellcolor[HTML]{FFFFFF}\textbf{Value}} \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}Age}                            & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}Mean (SD)}          & 61.64 (15.41)                                               \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}Ventilator-Free Days}           & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}Mean (SD)}          & 19.17 (11.6)                                                \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}Procalcitonin (ng/mL)}          & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}Mean (SD)}          & 3.15 (9.93)                                                 \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}Female}                         & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}n (\%)}             & 41 (41.41)                                                  \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}Male}                           & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}n (\%)}             & 58 (58.59)                                                  \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}With Mechanical Ventilation}    & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}n (\%)}             & 46 (46.46)                                                  \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}Without Mechanical Ventilation} & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}n (\%)}             & 53 (53.54)                                                  \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}In ICU}                         & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}n (\%)}             & 58 (58.59)                                                  \\ \hline
+\multicolumn{1}{|l|}{\cellcolor[HTML]{FFFFFF}Not in ICU}                     & \multicolumn{1}{l|}{\cellcolor[HTML]{FFFFFF}n (\%)}             & 41 (41.41)                                                  \\ \hline
+\end{tabular}
+\caption{Subject demographics and clinical characteristics}
+\label{tab:summary}
+\end{table}
+
+This table (Table \ref{tab:summary}) displays the summary statistics for the chosen gene, \emph{BPI}. It shows different variables including age, ventilator-free days, procalcitonin, sex, mechanical ventilation, and ICU status along with the values associated with each variable. 
+
+\newpage
+
+\section{Corrected Figures}
+\subsection{Histogram}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{Histogram.png}
+    \caption{Histogram including all feedback from previous submissions}
+    \label{fig:hist}
+\end{figure}
+
+The histogram above (Figure \ref{fig:hist}) displays the distribution of \emph{BPI} gene expression levels and the number of samples present in the dataset. There is a right skew present, meaning that there are more samples with lower gene expression levels with a smaller amount of samples showing higher gene expression levels. The tail displays the outliers on the right side of the graph, and shows us that the gene is not expressed at the same level for all individuals. The majority of the samples are also seen below the threshold of 200, and the median gene expression of the selected is calculated to be 21.86.
+
+
+\newpage
+\subsection{Scatterplot}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{Scatter.png}
+    \caption{Scatterplot including all feedback from previous submissions}
+    \label{fig:scatter}
+\end{figure}
+
+The scatter above (Figure \ref{fig:scatter}) displays the relationship between \emph{BPI} gene expression and ages of individuals sampled. There is a slight positive correlation between the two continuous variables (the slope of the line of best fit is around 0.2). The points seem to cluster towards the lower gene expression levels, specifically around ages 50 to 85. The y-intercept of the line of best fit for this graph is at 41.96, and there are a few outliers seen scattered towards higher gene expressions. The R value is 0.037, which means that there is a weak correlation between the two variables. The p value is 0.68, which means that we fail to reject the null hypothesis that there is no correlation between the two variables.
+
+\newpage
+\subsection{Boxplot}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{Boxplot.png}
+    \caption{Boxplot including all feedback from previous submissions}
+    \label{fig:box}
+\end{figure}
+
+The boxplot above (Figure \ref{fig:box}) displays the distribution of gene expression of \emph{BPI} across sexes and mechanical ventilation categories (required ventilation and did not require ventilation). It is observed that the samples with mechanical ventilation have a higher mean gene expression level for both males and females. The groups that required mechanical ventilation have a higher IQR when compared to the groups that did not require mechanical ventilation. Females with and without mechanical ventilation have a higher mean gene expression level than males with and without mechanical ventilation, respectively. 
+
+\newpage
+
+\section{Heatmap}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{Heatmap.png}
+    \caption{Heatmap created from ten genes}
+    \label{fig:heat}
+
+\end{figure}
+
+The heatmap above (Figure \ref{fig:heat}) displays patterns in gene expression, sex, and mechanical ventilation for each individual sampled. The intensity of the green color in the center represents how high the scaled gene expression is per sample. Euclidean clustering was done on the data. The tracking bars on the side show a differentiation in mechanical ventilation and sex, which are two columns down on the left end of the map. We can see the correlations between the ventilation and sex as well as gene expression from this. 
+
+\newpage
+
+\section{Hexbin Plot}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{Hexbin.png}
+    \caption{Hexbin plot}
+    \label{fig:hex}
+
+\end{figure}
+
+The hexbin plot above (Figure \ref{fig:hex}) helps in visualizing the relationship seen between age and \emph{BPI} gene expression. Each hexagon in the plot is not just one point from the dataset but is clustered by bins. The number of individual samples that are included within a bin is represented by the intensity of the green, as shown by the legend. This plot allows us to understand how gene expression varies based on age. 
+
+\newpage
+
+\bibliographystyle{pnas2009}
+\bibliography{QBSRef}
+
+\end{document}
+
